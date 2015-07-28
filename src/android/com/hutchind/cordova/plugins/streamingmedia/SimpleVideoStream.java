@@ -6,12 +6,14 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.media.MediaPlayer;
 import android.widget.MediaController;
+import android.content.Context;
 import android.content.Intent;
 import android.view.MotionEvent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -20,16 +22,60 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
+class MyMediaView extends VideoView {
+	private boolean mMustWatch = false;
+//	private int lastMSec = 0;
+	
+    public MyMediaView(Context context) {
+		super(context);
+		// TODO Auto-generated constructor stub
+	}
+    
+    public boolean getMustWatch() {
+    	return mMustWatch;
+    }
+    
+    public void setMustWatch(boolean mustWatch) {
+    	this.mMustWatch = mustWatch;
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+    	if (mMustWatch == true) {
+    		return false;
+    	}
+    	return super.canSeekBackward();
+    }
+
+    @Override
+    public boolean canSeekForward() {
+    	if (mMustWatch == true) {
+    		return false;
+    	}
+    	return super.canSeekForward();
+    }
+
+    @Override
+    public void seekTo(int msec) {
+    	if (mMustWatch == true) {
+    		return ;
+    	}
+    	super.seekTo(msec);
+    }
+}
+
 public class SimpleVideoStream extends Activity implements
 	MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
 	MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 	private String TAG = getClass().getSimpleName();
-	private VideoView mVideoView = null;
+	private MyMediaView mVideoView = null;
 	private MediaPlayer mMediaPlayer = null;
 	private MediaController mMediaController = null;
 	private ProgressBar mProgressBar = null;
 	private String mVideoUrl;
 	private Boolean mShouldAutoClose = true;
+	private Boolean mustWatch = false;
+	private Integer mStartPoint = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +87,16 @@ public class SimpleVideoStream extends Activity implements
 		mVideoUrl = b.getString("mediaUrl");
 		mShouldAutoClose = b.getBoolean("shouldAutoClose");
 		mShouldAutoClose = mShouldAutoClose == null ? true : mShouldAutoClose;
+		mustWatch = b.getBoolean("mustWatch");
+		mustWatch = mustWatch == null ? false : mustWatch;
+		mStartPoint = b.getInt("seek");
+		mStartPoint = mStartPoint == null ? 0 : mStartPoint;
 
 		RelativeLayout relLayout = new RelativeLayout(this);
 		relLayout.setBackgroundColor(Color.BLACK);
 		RelativeLayout.LayoutParams relLayoutParam = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
 		relLayoutParam.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
-		mVideoView = new VideoView(this);
+		mVideoView = new MyMediaView(this);
 		mVideoView.setLayoutParams(relLayoutParam);
 		relLayout.addView(mVideoView);
 
@@ -74,10 +124,24 @@ public class SimpleVideoStream extends Activity implements
 			mVideoView.setOnPreparedListener(this);
 			mVideoView.setOnErrorListener(this);
 			mVideoView.setVideoURI(videoUri);
-			mMediaController = new MediaController(this);
+			
+			mMediaController = new MediaController(this){
+		        public boolean dispatchKeyEvent(KeyEvent event)
+		        {
+		            if (event.getKeyCode() == KeyEvent.KEYCODE_BACK/* && event.getAction() == KeyEvent.ACTION_UP*/) {
+		                ((SimpleVideoStream) getContext()).onBackPressed();
+		                return true;
+		            }
+
+		            return super.dispatchKeyEvent(event);
+		        }
+		    };
 			mMediaController.setAnchorView(mVideoView);
 			mMediaController.setMediaPlayer(mVideoView);
 			mVideoView.setMediaController(mMediaController);
+			
+			mVideoView.seekTo(mStartPoint);
+			Log.d(TAG, "Seek to " + mStartPoint.toString());
 		} catch (Throwable t) {
 			Log.d(TAG, t.toString());
 		}
@@ -90,6 +154,7 @@ public class SimpleVideoStream extends Activity implements
 				// Video is not at the very beginning anymore.
 				// Hide the progress bar.
 				mProgressBar.setVisibility(View.GONE);
+				mVideoView.setMustWatch(mustWatch);
 			} else {
 				// Video is still at the very beginning.
 				// Check again after a small amount of time.
@@ -124,9 +189,10 @@ public class SimpleVideoStream extends Activity implements
 		stop();
 	}
 
-	private void wrapItUp(int resultCode, String message) {
+	private void wrapItUp(int resultCode, String message, int msec) {
 		Intent intent = new Intent();
 		intent.putExtra("message", message);
+		intent.putExtra("last", msec);
 		setResult(resultCode, intent);
 		finish();
 	}
@@ -134,7 +200,7 @@ public class SimpleVideoStream extends Activity implements
 	public void onCompletion(MediaPlayer mp) {
 		stop();
 		if (mShouldAutoClose) {
-			wrapItUp(RESULT_OK, null);
+			wrapItUp(RESULT_OK, null, 0);
 		}
 	}
 
@@ -160,7 +226,7 @@ public class SimpleVideoStream extends Activity implements
 		sb.append(extra);
 		Log.e(TAG, sb.toString());
 
-		wrapItUp(RESULT_CANCELED, sb.toString());
+		wrapItUp(RESULT_CANCELED, sb.toString(), mVideoView.getCurrentPosition());
 		return true;
 	}
 
@@ -170,8 +236,12 @@ public class SimpleVideoStream extends Activity implements
 
 	@Override
 	public void onBackPressed() {
-		// If we're leaving, let's finish the activity
-		wrapItUp(RESULT_OK, null);
+		// If we're leaving, let's finish the activity		
+    	if (mustWatch == true) {
+    		wrapItUp(RESULT_CANCELED, "user terminated play", mVideoView.getCurrentPosition());
+    	} else {
+			wrapItUp(RESULT_OK, null, mVideoView.getCurrentPosition());
+    	}
 	}
 
 	@Override

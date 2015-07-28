@@ -32,12 +32,6 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 }
 
 -(void)parseOptions:(NSDictionary *)options type:(NSString *) type {
-	// Common options
-	if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"shouldAutoClose"]) {
-		shouldAutoClose = [[options objectForKey:@"shouldAutoClose"] boolValue];
-	} else {
-		shouldAutoClose = true;
-	}
 	if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"bgColor"]) {
 		[self setBackgroundColor:[options objectForKey:@"bgColor"]];
 	} else {
@@ -127,11 +121,6 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 }
 
 - (void)orientationChanged:(NSNotification *)notification {
-	if (imageView != nil) {
-		// adjust imageView for rotation
-		imageView.bounds = moviePlayer.backgroundView.bounds;
-		imageView.frame = moviePlayer.backgroundView.frame;
-	}
 }
 
 -(void)setImage:(NSString*)imagePath withScaleType:(NSString*)imageScaleType {
@@ -160,7 +149,6 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 -(void)startPlayer:(NSString*)uri {
 	NSURL *url = [NSURL URLWithString:uri];
 
-	moviePlayer =  [[MPMoviePlayerController alloc] initWithContentURL:url];
 
 	// Listen for playback finishing
 	[[NSNotificationCenter defaultCenter] addObserver:self
@@ -176,9 +164,6 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(orientationChanged:)
 												 name:UIDeviceOrientationDidChangeNotification
-											   object:nil];
-
-	moviePlayer.controlStyle = MPMovieControlStyleDefault;
 
 	moviePlayer.shouldAutoplay = YES;
 	if (imageView != nil) {
@@ -187,9 +172,7 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 	}
 	moviePlayer.backgroundView.backgroundColor = backgroundColor;
 	[self.viewController.view addSubview:moviePlayer.view];
-
 	// Note: animating does a fade to black, which may not match background color
-	[moviePlayer setFullscreen:YES animated:NO];
 }
 
 - (void) moviePlayBackDidFinish:(NSNotification*)notification {
@@ -210,8 +193,6 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 	if (shouldAutoClose || [errorMsg length] != 0) {
 		[self cleanup];
 		CDVPluginResult* pluginResult;
-		if ([errorMsg length] != 0) {
-			pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];
 		} else {
 			pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:true];
 		}
@@ -222,8 +203,6 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 -(void)doneButtonClick:(NSNotification*)notification{
 	[self cleanup];
 
-	CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:true];
-	[self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
 - (void)cleanup {

@@ -71,10 +71,13 @@ public class StreamingMedia extends CordovaPlugin {
 							final String optKey = (String)optKeys.next();
 							if (options.get(optKey).getClass().equals(String.class)) {
 								extras.putString(optKey, (String)options.get(optKey));
-								Log.v(TAG, "Added option: " + optKey + " -> " + String.valueOf(options.get(optKey)));
+								Log.v(TAG, "Added option1: " + optKey + " -> " + String.valueOf(options.get(optKey)));
 							} else if (options.get(optKey).getClass().equals(Boolean.class)) {
-								extras.putBoolean("shouldAutoClose", true);
-								Log.v(TAG, "Added option: " + optKey + " -> " + String.valueOf(options.get(optKey)));
+								extras.putBoolean(optKey, (Boolean) options.get(optKey));
+								Log.v(TAG, "Added option2: " + optKey + " -> " + String.valueOf(options.get(optKey)));
+							} else if (options.get(optKey).getClass().equals(Integer.class)) {
+								extras.putInt(optKey, (Integer) options.get(optKey));
+								Log.v(TAG, "Added option3: " + optKey + " -> " + String.valueOf(options.get(optKey)));
 							}
 
 						} catch (JSONException e) {
@@ -101,7 +104,19 @@ public class StreamingMedia extends CordovaPlugin {
 				if (intent != null && intent.hasExtra("message")) {
 					errMsg = intent.getStringExtra("message");
 				}
-				this.callbackContext.error(errMsg);
+				int position = -1;
+				if (intent != null && intent.hasExtra("last")) {
+					position = intent.getIntExtra("last", -1);
+				}
+				JSONObject message = new JSONObject();
+				try {
+					message.put("errMsg", errMsg);
+					message.put("last", position);
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				this.callbackContext.error(message);
 			}
 		}
 	}
