@@ -18,11 +18,15 @@
 	BOOL shouldAutoClose;
 	UIColor *backgroundColor;
 	UIImageView *imageView;
+    BOOL mustWatch;
+    NSInteger seek;
+    UIButton *closeButton;
 }
 
 NSString * const TYPE_VIDEO = @"VIDEO";
 NSString * const TYPE_AUDIO = @"AUDIO";
 NSString * const DEFAULT_IMAGE_SCALE = @"center";
+NSString * const ERROR_DONE = @"user terminated play";
 
 - (CDVPlugin*) initWithWebView:(UIWebView*)theWebView {
 	NSLog(@"-------------------------------------------------");
@@ -32,6 +36,22 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 }
 
 -(void)parseOptions:(NSDictionary *)options type:(NSString *) type {
+    // Common options
+    if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"shouldAutoClose"]) {
+        shouldAutoClose = [[options objectForKey:@"shouldAutoClose"] boolValue];
+    } else {
+        shouldAutoClose = true;
+    }
+    if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"mustWatch"]) {
+        mustWatch = [[options objectForKey:@"mustWatch"] boolValue];
+    } else {
+        mustWatch = true;
+    }
+    if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"seek"]) {
+        seek = [[options objectForKey:@"seek"] integerValue];
+    } else {
+        seek = 0;
+    }
 	if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"bgColor"]) {
 		[self setBackgroundColor:[options objectForKey:@"bgColor"]];
 	} else {
@@ -121,6 +141,11 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 }
 
 - (void)orientationChanged:(NSNotification *)notification {
+    if (imageView != nil) {
+        // adjust imageView for rotation
+        imageView.bounds = moviePlayer.backgroundView.bounds;
+        imageView.frame = moviePlayer.backgroundView.frame;
+    }
 }
 
 -(void)setImage:(NSString*)imagePath withScaleType:(NSString*)imageScaleType {
@@ -149,6 +174,10 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 -(void)startPlayer:(NSString*)uri {
 	NSURL *url = [NSURL URLWithString:uri];
 
+    moviePlayer =  [[MPMoviePlayerController alloc] initWithContentURL:url];
+    if (seek > 0) {
+        moviePlayer.initialPlaybackTime = seek / 1000.0;
+    }
 
 	// Listen for playback finishing
 	[[NSNotificationCenter defaultCenter] addObserver:self
@@ -164,7 +193,8 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(orientationChanged:)
 												 name:UIDeviceOrientationDidChangeNotification
-
+                                               object:nil];
+    
 	moviePlayer.shouldAutoplay = YES;
 	if (imageView != nil) {
 		[moviePlayer.backgroundView setAutoresizesSubviews:YES];
@@ -172,7 +202,26 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 	}
 	moviePlayer.backgroundView.backgroundColor = backgroundColor;
 	[self.viewController.view addSubview:moviePlayer.view];
+    
+    CGRect parentFrame = self.viewController.view.frame;
+    if (mustWatch) {
+        UIView *bannerView = [[UIView alloc] initWithFrame:CGRectMake(80, parentFrame.size.height - 60, parentFrame.size.width - 80, 60)];
+        [bannerView setBackgroundColor:[UIColor clearColor]];
+        [self.viewController.view addSubview:bannerView];
+    }
+    closeButton = [[UIButton alloc] initWithFrame:CGRectMake(parentFrame.size.width-35, parentFrame.size.height - 38, 32, 32)];
+    [closeButton setTitle:@"X" forState:UIControlStateNormal];
+    [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    [closeButton setReversesTitleShadowWhenHighlighted:YES];
+    [self.viewController.view addSubview:closeButton];
+    
 	// Note: animating does a fade to black, which may not match background color
+    moviePlayer.view.frame = self.viewController.view.frame;
+	[moviePlayer setFullscreen:NO animated:NO];
+}
+
+- (void) closeButtonTapped: (id) sender {
+    [self doneButtonClick:nil];
 }
 
 - (void) moviePlayBackDidFinish:(NSNotification*)notification {
@@ -193,6 +242,10 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 	if (shouldAutoClose || [errorMsg length] != 0) {
 		[self cleanup];
 		CDVPluginResult* pluginResult;
+        if ([errorMsg length] != 0) {
+            NSTimeInterval current = [moviePlayer currentPlaybackTime];
+            NSInteger mSec = current * 1000;
+			pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:@{@"errMsg": ERROR_DONE, @"last": [NSNumber numberWithInteger:mSec]}];
 		} else {
 			pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:true];
 		}
@@ -201,8 +254,17 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 }
 
 -(void)doneButtonClick:(NSNotification*)notification{
+    NSTimeInterval current = [moviePlayer currentPlaybackTime];
+    NSInteger mSec = current * 1000;
 	[self cleanup];
 
+    CDVPluginResult *pluginResult;
+    if (mustWatch == YES) {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:@{@"errMsg": ERROR_DONE, @"last": [NSNumber numberWithInteger:mSec]}];
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:true];
+    }
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
 - (void)cleanup {
@@ -233,6 +295,8 @@ NSString * const DEFAULT_IMAGE_SCALE = @"center";
 		moviePlayer.controlStyle = MPMovieControlStyleNone;
 		[moviePlayer.view removeFromSuperview];
 		moviePlayer = nil;
+        [closeButton removeFromSuperview];
+        closeButton = nil;
 	}
 }
 @end
