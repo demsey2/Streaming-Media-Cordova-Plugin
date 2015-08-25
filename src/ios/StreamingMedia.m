@@ -210,11 +210,16 @@ NSString * const ERROR_DONE = @"user terminated play";
         [self.viewController.view addSubview:bannerView];
     }
     closeButton = [[UIButton alloc] initWithFrame:CGRectMake(parentFrame.size.width-35, parentFrame.size.height - 38, 32, 32)];
-    [closeButton setTitle:@"Loading ..." forState:UIControlStateNormal];
+    [closeButton setTitle:@"X" forState:UIControlStateNormal];
     [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [closeButton setReversesTitleShadowWhenHighlighted:YES];
     [self.viewController.view addSubview:closeButton];
     
+    loadingText = [[UIButton alloc] initWithFrame:CGRectMake( ((parentFrame.size.width/2)-60), parentFrame.size.height, 200, 32)];
+    [loadingText setTitle:@"Loading..." forState:UIControlStateNormal];
+    [self.viewController.view addSubview:loadingText];
+
+
 	// Note: animating does a fade to black, which may not match background color
     moviePlayer.view.frame = self.viewController.view.frame;
 	[moviePlayer setFullscreen:NO animated:NO];
