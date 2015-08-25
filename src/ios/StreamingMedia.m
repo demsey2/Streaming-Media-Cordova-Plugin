@@ -21,6 +21,7 @@
     BOOL mustWatch;
     NSInteger seek;
     UIButton *closeButton;
+    UIButton *loadingText;
 }
 
 NSString * const TYPE_VIDEO = @"VIDEO";
@@ -302,6 +303,8 @@ NSString * const ERROR_DONE = @"user terminated play";
 		moviePlayer = nil;
         [closeButton removeFromSuperview];
         closeButton = nil;
+        [loadingText removeFromSuperview];
+        loadingText = nil;
 	}
 }
 @end
