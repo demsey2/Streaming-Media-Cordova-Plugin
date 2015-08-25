@@ -210,7 +210,7 @@ NSString * const ERROR_DONE = @"user terminated play";
         [self.viewController.view addSubview:bannerView];
     }
     closeButton = [[UIButton alloc] initWithFrame:CGRectMake(parentFrame.size.width-35, parentFrame.size.height - 38, 32, 32)];
-    [closeButton setTitle:@"X" forState:UIControlStateNormal];
+    [closeButton setTitle:@"Loading ..." forState:UIControlStateNormal];
     [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [closeButton setReversesTitleShadowWhenHighlighted:YES];
     [self.viewController.view addSubview:closeButton];
