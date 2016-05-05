@@ -1,6 +1,7 @@
 #import "StreamingMedia.h"
 #import <Cordova/CDV.h>
 
+
 @interface StreamingMedia()
 	- (void)parseOptions:(NSDictionary *) options type:(NSString *) type;
 	- (void)play:(CDVInvokedUrlCommand *) command type:(NSString *) type;
@@ -142,12 +143,24 @@ NSString * const ERROR_DONE = @"user terminated play";
 }
 
 - (void)orientationChanged:(NSNotification *)notification {
+	NSLog(@"rotation happening !!");
+	NSLog(@" notification : %@",notification);
+	NSLog(@" moviePlayer : %@",moviePlayer);
+	NSLog(@"imageView : %@",imageView);
     if (imageView != nil) {
         // adjust imageView for rotation
         imageView.bounds = moviePlayer.backgroundView.bounds;
         imageView.frame = moviePlayer.backgroundView.frame;
     }
 }
+
+
+- (void)bufferStateChange:(NSNotification *)notification {
+	NSLog(@"**************uffer change happening !!");
+	NSLog(@" notification : %@",notification);
+	NSLog(@" moviePlayer : %@",moviePlayer);
+}
+
 
 -(void)setImage:(NSString*)imagePath withScaleType:(NSString*)imageScaleType {
 	imageView = [[UIImageView alloc] initWithFrame:self.viewController.view.bounds];
@@ -195,6 +208,14 @@ NSString * const ERROR_DONE = @"user terminated play";
 											 selector:@selector(orientationChanged:)
 												 name:UIDeviceOrientationDidChangeNotification
                                                object:nil];
+
+	// Listen for bufferring start/stop
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(bufferStateChange:)
+												 name:MPMoviePlayerLoadStateDidChangeNotification
+                                               object:nil];
+
+	
     
 	moviePlayer.shouldAutoplay = YES;
 	if (imageView != nil) {
@@ -216,8 +237,8 @@ NSString * const ERROR_DONE = @"user terminated play";
     [closeButton setReversesTitleShadowWhenHighlighted:YES];
     [self.viewController.view addSubview:closeButton];
     
-    loadingText = [[UIButton alloc] initWithFrame:CGRectMake( ((parentFrame.size.width/2)-60), parentFrame.size.height, 200, 32)];
-    [loadingText setTitle:@"Loading..." forState:UIControlStateNormal];
+    loadingText = [[UIButton alloc] initWithFrame:CGRectMake((parentFrame.size.width/2)-60, (parentFrame.size.height/2)-30, 120, 32)];
+    [loadingText setTitle:@"Buffering..." forState:UIControlStateNormal];
     [self.viewController.view addSubview:loadingText];
 
 
@@ -293,6 +314,12 @@ NSString * const ERROR_DONE = @"user terminated play";
 							removeObserver:self
 									  name:UIDeviceOrientationDidChangeNotification
 									object:nil];
+	// Remove buffer state change listener
+	[[NSNotificationCenter defaultCenter]
+							removeObserver:self
+									  name:MPMoviePlayerLoadStateDidChangeNotification
+									object:nil];
+
 
 	if (moviePlayer) {
 		moviePlayer.fullscreen = NO;
