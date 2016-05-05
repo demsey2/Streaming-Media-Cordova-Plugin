@@ -144,9 +144,7 @@ NSString * const ERROR_DONE = @"user terminated play";
 
 - (void)orientationChanged:(NSNotification *)notification {
 	NSLog(@"rotation happening !!");
-	NSLog(@" notification : %@",notification);
-	NSLog(@" moviePlayer : %@",moviePlayer);
-	NSLog(@"imageView : %@",imageView);
+
     if (imageView != nil) {
         // adjust imageView for rotation
         imageView.bounds = moviePlayer.backgroundView.bounds;
@@ -156,9 +154,11 @@ NSString * const ERROR_DONE = @"user terminated play";
 
 
 - (void)bufferStateChange:(NSNotification *)notification {
-	NSLog(@"**************uffer change happening !!");
-	NSLog(@" notification : %@",notification);
-	NSLog(@" moviePlayer : %@",moviePlayer);
+	if (moviePlayer.loadState == MPMovieLoadStatePlayable | MPMovieLoadStatePlaythroughOK) {
+		[loadingText setTitle:@"" forState:UIControlStateNormal];
+	} else {
+		[loadingText setTitle:@"Buffering..." forState:UIControlStateNormal];
+	}
 }
 
 
