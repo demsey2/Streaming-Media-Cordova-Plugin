@@ -21,6 +21,7 @@
 	UIImageView *imageView;
     BOOL mustWatch;
     NSInteger seek;
+    UIView *bannerView;
     UIButton *closeButton;
     UIButton *loadingText;
 }
@@ -167,7 +168,10 @@ NSString * const ERROR_DONE = @"user terminated play";
 	*/
 
 
+
+
 	// reposition custom UI
+	
 	CGRect parentFrame = self.viewController.view.frame;
 	
 	CGRect frame = closeButton.frame;
@@ -179,6 +183,15 @@ NSString * const ERROR_DONE = @"user terminated play";
 	frame.origin.x = (parentFrame.size.width/2)-60;
 	frame.origin.y = (parentFrame.size.height/2)-30;
 	loadingText.frame = frame;
+
+	if (mustWatch) {
+		frame = bannerView.frame;
+		frame.origin.x = 80;
+		frame.origin.y = parentFrame.size.height - 60;
+		bannerView.frame = frame;
+	}
+
+	// -- 
 
 
 	moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
@@ -268,7 +281,7 @@ NSString * const ERROR_DONE = @"user terminated play";
     
     CGRect parentFrame = self.viewController.view.frame;
     if (mustWatch) {
-        UIView *bannerView = [[UIView alloc] initWithFrame:CGRectMake(80, parentFrame.size.height - 60, parentFrame.size.width - 80, 60)];
+        bannerView = [[UIView alloc] initWithFrame:CGRectMake(80, parentFrame.size.height - 60, parentFrame.size.width - 80, 60)];
         [bannerView setBackgroundColor:[UIColor clearColor]];
         [self.viewController.view addSubview:bannerView];
     }
