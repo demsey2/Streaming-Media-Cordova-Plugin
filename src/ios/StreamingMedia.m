@@ -143,7 +143,33 @@ NSString * const ERROR_DONE = @"user terminated play";
 }
 
 - (void)orientationChanged:(NSNotification *)notification {
+	
+	CGFloat width = [UIScreen mainScreen].bounds.size.width;
+	CGFloat height = [UIScreen mainScreen].bounds.size.height;
+	CGRect newSize;
+
+	newSize = CGRectMake(0, 0 ,width, height);  
+	moviePlayer.view.frame = newSize;
+	/*
 	NSLog(@"rotation happening !!");
+	NSLog(@" w :  %f", width);
+	NSLog(@" h :  %f", height);
+	*/
+	/*
+	if (UIDeviceOrientationIsLandscape([UIDevice currentDevice].orientation))
+	{
+
+	}
+	else // (UIDeviceOrientationIsPortrait([UIDevice currentDevice].orientation)) OR other 
+	{
+
+	}
+	*/
+	
+
+	moviePlayer.scalingMode = MPMovieScalingModeNone;
+	moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
+
 
     if (imageView != nil) {
         // adjust imageView for rotation
@@ -189,6 +215,8 @@ NSString * const ERROR_DONE = @"user terminated play";
 	NSURL *url = [NSURL URLWithString:uri];
 
     moviePlayer =  [[MPMoviePlayerController alloc] initWithContentURL:url];
+    [moviePlayer setScalingMode:MPMovieScalingModeAspectFit];
+
     if (seek > 0) {
         moviePlayer.initialPlaybackTime = seek / 1000.0;
     }
@@ -293,6 +321,7 @@ NSString * const ERROR_DONE = @"user terminated play";
     }
     [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
+
 
 - (void)cleanup {
 	NSLog(@"Clean up");
