@@ -165,9 +165,22 @@ NSString * const ERROR_DONE = @"user terminated play";
 
 	}
 	*/
-	
 
-	moviePlayer.scalingMode = MPMovieScalingModeNone;
+
+	// reposition custom UI
+	CGRect parentFrame = self.viewController.view.frame;
+	
+	CGRect frame = closeButton.frame;
+	frame.origin.x = parentFrame.size.width-35;
+	frame.origin.y = parentFrame.size.height - 38;
+	closeButton.frame = frame;
+
+	frame = loadingText.frame;
+	frame.origin.x = (parentFrame.size.width/2)-60;
+	frame.origin.y = (parentFrame.size.height/2)-30;
+	loadingText.frame = frame;
+
+
 	moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
 
 
