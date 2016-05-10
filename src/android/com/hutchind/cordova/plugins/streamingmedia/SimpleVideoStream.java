@@ -24,7 +24,7 @@ import android.widget.VideoView;
 
 class MyMediaView extends VideoView {
 	private boolean mMustWatch = false;
-//	private int lastMSec = 0;
+	private int maxWatchedMSec = 0;
 	
     public MyMediaView(Context context) {
 		super(context);
@@ -41,10 +41,16 @@ class MyMediaView extends VideoView {
 
     @Override
     public boolean canSeekBackward() {
+    	
     	if (mMustWatch == true) {
+    		/* allow seeking backwards, even if mustWatch *
     		return false;
+    		*/
+    		int currPos = this.getCurrentPosition();
+    		maxWatchedMSec = Math.max (maxWatchedMSec, currPos);
     	}
-    	return super.canSeekBackward();
+    	//return super.canSeekBackward();
+    	return true;    
     }
 
     @Override
@@ -58,6 +64,14 @@ class MyMediaView extends VideoView {
     @Override
     public void seekTo(int msec) {
     	if (mMustWatch == true) {
+    		//
+    		int currPos = this.getCurrentPosition();
+    		maxWatchedMSec = Math.max (maxWatchedMSec, currPos);
+    		if (msec<maxWatchedMSec) {
+    			super.seekTo(msec);
+    		} else if (msec>maxWatchedMSec) {
+    			super.seekTo(maxWatchedMSec);
+    		}
     		return ;
     	}
     	super.seekTo(msec);
