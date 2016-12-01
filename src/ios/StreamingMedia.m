@@ -20,6 +20,7 @@
 	UIColor *backgroundColor;
 	UIImageView *imageView;
     BOOL mustWatch;
+    BOOL *initFullscreen;
     NSInteger seek;
     UIView *bannerView;
     UIButton *closeButton;
@@ -30,13 +31,6 @@ NSString * const TYPE_VIDEO = @"VIDEO";
 NSString * const TYPE_AUDIO = @"AUDIO";
 NSString * const DEFAULT_IMAGE_SCALE = @"center";
 NSString * const ERROR_DONE = @"user terminated play";
-
-- (CDVPlugin*) initWithWebView:(UIWebView*)theWebView {
-	NSLog(@"-------------------------------------------------");
-	NSLog(@"INITWITHWEBVIEW");
-	self = (StreamingMedia*)[super initWithWebView:theWebView];
-	return self;
-}
 
 -(void)parseOptions:(NSDictionary *)options type:(NSString *) type {
     // Common options
@@ -60,6 +54,12 @@ NSString * const ERROR_DONE = @"user terminated play";
 	} else {
 		backgroundColor = [UIColor blackColor];
 	}
+
+    if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"initFullscreen"]) {
+        initFullscreen = [[options objectForKey:@"initFullscreen"] boolValue];
+    } else {
+        initFullscreen = true;
+    }
 
 	if ([type isEqualToString:TYPE_AUDIO]) {
 		// bgImage
@@ -90,12 +90,45 @@ NSString * const ERROR_DONE = @"user terminated play";
 	[self startPlayer:mediaUrl];
 }
 
+-(void)pause:(CDVInvokedUrlCommand *) command type:(NSString *) type {
+    callbackId = command.callbackId;
+    if (moviePlayer) {
+        [moviePlayer pause];
+    }
+}
+
+-(void)resume:(CDVInvokedUrlCommand *) command type:(NSString *) type {
+    callbackId = command.callbackId;
+    if (moviePlayer) {
+        [moviePlayer play];
+    }
+}
+
+-(void)stop:(CDVInvokedUrlCommand *) command type:(NSString *) type {
+    callbackId = command.callbackId;
+    if (moviePlayer) {
+        [moviePlayer stop];
+    }
+}
+
 -(void)playVideo:(CDVInvokedUrlCommand *) command {
 	[self play:command type:[NSString stringWithString:TYPE_VIDEO]];
 }
 
 -(void)playAudio:(CDVInvokedUrlCommand *) command {
 	[self play:command type:[NSString stringWithString:TYPE_AUDIO]];
+}
+
+-(void)pauseAudio:(CDVInvokedUrlCommand *) command {
+    [self pause:command type:[NSString stringWithString:TYPE_AUDIO]];
+}
+
+-(void)resumeAudio:(CDVInvokedUrlCommand *) command {
+    [self resume:command type:[NSString stringWithString:TYPE_AUDIO]];
+}
+
+-(void)stopAudio:(CDVInvokedUrlCommand *) command {
+    [self stop:command type:[NSString stringWithString:TYPE_AUDIO]];
 }
 
 -(void) setBackgroundColor:(NSString *)color {
@@ -298,7 +331,11 @@ NSString * const ERROR_DONE = @"user terminated play";
 
 	// Note: animating does a fade to black, which may not match background color
     moviePlayer.view.frame = self.viewController.view.frame;
-	[moviePlayer setFullscreen:NO animated:NO];
+    if (initFullscreen) {
+        [moviePlayer setFullscreen:YES animated:NO];
+    } else {
+        [moviePlayer setFullscreen:NO animated:NO];
+    }
 }
 
 - (void) closeButtonTapped: (id) sender {
@@ -323,9 +360,9 @@ NSString * const ERROR_DONE = @"user terminated play";
 	if (shouldAutoClose || [errorMsg length] != 0) {
 		[self cleanup];
 		CDVPluginResult* pluginResult;
-        if ([errorMsg length] != 0) {
-            NSTimeInterval current = [moviePlayer currentPlaybackTime];
-            NSInteger mSec = current * 1000;
+		if ([errorMsg length] != 0) {if ([errorMsg length] != 0) {
+			NSTimeInterval current = [moviePlayer currentPlaybackTime];
+			NSInteger mSec = current * 1000;
 			pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:@{@"errMsg": ERROR_DONE, @"last": [NSNumber numberWithInteger:mSec]}];
 		} else {
 			pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:true];
@@ -352,6 +389,7 @@ NSString * const ERROR_DONE = @"user terminated play";
 - (void)cleanup {
 	NSLog(@"Clean up");
 	imageView = nil;
+    initFullscreen = false;
 	backgroundColor = nil;
 
 	// Remove Done Button listener
