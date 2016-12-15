@@ -67,7 +67,7 @@ NSString * const ERROR_DONE = @"user terminated play";
     if (![options isKindOfClass:[NSNull class]] && [options objectForKey:@"initFullscreen"]) {
         initFullscreen = [[options objectForKey:@"initFullscreen"] boolValue];
     } else {
-        initFullscreen = true;
+        initFullscreen = false;
     }
 
 	if ([type isEqualToString:TYPE_AUDIO]) {
