@@ -1,21 +1,29 @@
 # Cordova Streaming Media plugin
 
-for iOS and Android, by [Feng Liu](https://github.com/goldendragon88)
-
-1. [Description](https://github.com/goldendragon88/Streaming-Media-Cordova-Plugin#1-description)
-2. [Usage](https://github.com/goldendragon88/Streaming-Media-Cordova-Plugin#3-usage)
-3. [Demo](https://github.com/goldendragon88/streaming-media-plugin-demo)
-
 This plugin allows you to stream audio and video in a fullscreen, native player on iOS and Android.
 
-* 1.0.0 Works with Cordova 3.x
-* 1.0.1+ Works with Cordova >= 4.0
+
+**This version of the plugin supports a "mustWatch" option which means that the user is unable to skip forward in the video player, and an error is returned by the plugin if they do not watch until the end**
+
+This version by [Kris Randall](https://github.com/krisrandall/), from a fork by [Feng Liu](https://github.com/goldendragon88).     
+[Original plugin](https://github.com/nchutchind/cordova-plugin-streaming-media) by [Nicholas Hutchind](https://github.com/nchutchind).
+
+
+
+
+## Demo
+
+[https://github.com/krisrandall/streaming-media-plugin-demo](https://github.com/krisrandall/streaming-media-plugin-demo)
+
+
 
 ## Installation
 
 ```
-cordova plugin add cordova-plugin-streaming-media
+cordova plugin add https://github.com/krisrandall/Streaming-Media-Cordova-Plugin.git
 ```
+
+## Notes
 
 ### iOS specifics
 * Uses the MPMoviePlayerController.
