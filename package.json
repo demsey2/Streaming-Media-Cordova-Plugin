@@ -23,5 +23,11 @@
   "bugs": {
     "url": "https://github.com/nchutchind/Streaming-Media-Cordova-Plugin/issues"
   },
-  "homepage": "https://github.com/nchutchind/Streaming-Media-Cordova-Plugin#readme"
+  "homepage": "https://github.com/nchutchind/Streaming-Media-Cordova-Plugin#readme",
+  "cordova": {
+   "id": "cordova-plugin-streaming-media",
+   "platforms": [
+     "ios",
+     "android"
+  ]}
 }
