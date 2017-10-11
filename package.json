@@ -24,6 +24,17 @@
     "url": "https://github.com/nchutchind/Streaming-Media-Cordova-Plugin/issues"
   },
   "homepage": "https://github.com/nchutchind/Streaming-Media-Cordova-Plugin#readme",
+  "platforms": [
+    "ios",
+    "android",
+    "wp8"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=3.0.0"
+    }
+  ],
   "cordova": {
    "id": "cordova-plugin-streaming-media",
    "platforms": [
